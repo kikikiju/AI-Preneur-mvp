@@ -14,7 +14,7 @@ from io import BytesIO
 
 import streamlit as st
 import openai
-from openai.error import InvalidRequestError, PermissionDeniedError
+from openai.error import InvalidRequestError, AuthenticationError, RateLimitError, OpenAIError
 
 # =============================================================
 #  CONFIG / DATA
@@ -311,7 +311,7 @@ def request_design_image(prompt: str, model: str = DEFAULT_IMAGE_MODEL) -> bytes
             if "quality" in error_str or "Invalid value" in error_str:
                 kwargs.pop("quality", None)
             response = client.images.generate(**kwargs)
-        except PermissionDeniedError:
+        except AuthenticationError:
             if model == DEFAULT_IMAGE_MODEL:
                 return request_design_image(prompt, ALT_IMAGE_MODEL)
             raise
