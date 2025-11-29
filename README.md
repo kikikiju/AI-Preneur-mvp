@@ -2,6 +2,9 @@
 
 Streamlit으로 구현된 상담 도구로, 맞춤 케이크 상담·견적을 돕고(Pro 버전은) AI 기반 디자인 브리프와 시안 이미지를 자동으로 만들어 줍니다.
 
+## pro 버전 데모 링크
+https://ai-preneur-mvp-jdpdxosh46btysm8zzglas.streamlit.app/
+
 ## 저장소 구성
 
 ```
