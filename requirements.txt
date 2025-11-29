@@ -1,4 +1,5 @@
 streamlit
-openai>=1.0
+openai==0.28.1
 requests
 pillow
+python-dotenv
