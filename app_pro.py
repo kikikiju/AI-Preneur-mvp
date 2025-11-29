@@ -245,24 +245,21 @@ def request_design_brief(user_prompt: str, system_prompt: str, image_b64: str | 
 
     if HAS_RESPONSES_API:
         content = [{"type": "input_text", "text": enhanced_prompt}]
+
         if image_b64:
             content.append({
                 "type": "input_image",
-                "data": {
-                    "image": image_b64
-                }
+                "image_url": f"data:image/jpeg;base64,{image_b64}"
             })
 
-
-
-
         response = client.responses.create(
-                model="gpt-5-nano",
-                input=[{
-                    "role": "user",
-                    "content": content
-                }],
+            model="gpt-5-nano",
+            input=[{
+                "role": "user",
+                "content": content
+            }],
         )
+
         primary_text = extract_output_text(response)
         return primary_text or "결과를 읽어오지 못했습니다."
 
