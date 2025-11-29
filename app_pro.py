@@ -13,7 +13,8 @@ from io import BytesIO
 
 
 import streamlit as st
-from openai import BadRequestError, OpenAI, PermissionDeniedError
+from openai import OpenAI
+from openai import BadRequestError, PermissionDeniedError
 
 # =============================================================
 #  CONFIG / DATA
@@ -70,7 +71,7 @@ OPENAI_API_KEY = load_api_key()
 if not OPENAI_API_KEY:
     st.warning("OPENAI_API_KEY 환경 변수 또는 openai_key.txt 파일을 통해 API 키를 제공해주세요.")
 
-client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 HAS_RESPONSES_API = bool(client and getattr(getattr(client, "responses", None), "create", None))
 HAS_CHAT_API = bool(client and getattr(getattr(getattr(client, "chat", None), "completions", None), "create", None))
 HAS_LEGACY_CHAT_API = bool(client and getattr(client, "ChatCompletion", None))
