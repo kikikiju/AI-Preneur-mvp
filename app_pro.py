@@ -72,9 +72,7 @@ if not OPENAI_API_KEY:
 
 client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 HAS_RESPONSES_API = bool(client and getattr(getattr(client, "responses", None), "create", None))
-HAS_LEGACY_CHAT_API = bool(client and getattr(client, "ChatCompletion", None))
 HAS_IMAGES_API = bool(client and getattr(getattr(client, "images", None), "generate", None))
-HAS_LEGACY_IMAGE_API = bool(client and getattr(client, "Image", None))
 
 DEFAULT_IMAGE_MODEL = "dall-e-3"
 ALT_IMAGE_MODEL = "dall-e-3"
@@ -228,15 +226,6 @@ def request_design_brief(user_prompt: str, system_prompt: str, image_b64: str | 
                     primary_text += c.get("text", "")
         return primary_text or "결과를 읽어오지 못했습니다."
 
-    if HAS_LEGACY_CHAT_API:
-        response = client.responses.create(
-                model="gpt-5-nano",
-                input=[{
-                    "role": "user",
-                    "content": content
-                }],
-            )
-        return response["choices"][0]["message"]["content"]
 
     return "지원되는 챗 API가 없습니다."
 
