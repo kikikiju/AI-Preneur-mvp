@@ -5,6 +5,7 @@ import random
 import json
 import re
 from openai import OpenAI
+from openai import BadRequestError, PermissionDeniedError
 
 # =============================================================
 #  API 키 로딩 / 클라이언트 초기화
@@ -63,7 +64,7 @@ def analyze_intent_with_gpt(user_text, current_order, chat_history):
     if "sk-" not in OPENAI_API_KEY:
         return current_order, "🚨 API 키가 설정되지 않았습니다!"
 
-    client = OpenAI(api_key=OPENAI_API_KEY)
+    client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
     recent_history = chat_history[-5:] if len(chat_history) > 5 else chat_history
     history_str = json.dumps(recent_history, ensure_ascii=False)
 
