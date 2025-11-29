@@ -105,6 +105,27 @@ def encode_image(uploaded_file) -> str:
 def build_prompt(user_prompt: str, system_prompt: str) -> str:
     return f"{system_prompt}\n\n사용자 요청:\n{user_prompt}"
 
+def extract_output_text(response):
+    """
+    Responses API output 에서 텍스트를 추출하는 안전한 헬퍼 함수
+    (output이 None이더라도 오류가 나지 않음)
+    """
+    if not hasattr(response, "output") or response.output is None:
+        # fallback: 일부 모델은 response.output_text 로 제공
+        if hasattr(response, "output_text") and response.output_text:
+            return response.output_text
+        
+        return ""  # 완전 실패 시 빈 문자열 반환
+
+    final_text = ""
+    for block in response.output:
+        content = block.get("content", [])
+        if content:
+            for c in content:
+                if c.get("type") == "output_text":
+                    final_text += c.get("text", "")
+    return final_text
+
 # =============================================================
 #  GPT 분석: 채팅에서 사용자의 의도(디자인 요소) 추출
 # =============================================================
@@ -148,11 +169,7 @@ def analyze_intent_with_gpt(user_text, current_order, chat_history):
                 }],
             )
 
-            out = ""
-            for item in response.output:
-                for c in item.content:
-                    if c.get("type") == "output_text":
-                        out += c.get("text", "")
+            content_str = extract_output_text(response).strip()
 
             content_str = out.strip()
         else:
@@ -219,12 +236,9 @@ def request_design_brief(user_prompt: str, system_prompt: str, image_b64: str | 
                     "content": content
                 }],
         )
-        primary_text = ""
-        for out in response.output:
-            for c in out.content:
-                if c.get("type") == "output_text":
-                    primary_text += c.get("text", "")
+        primary_text = extract_output_text(response)
         return primary_text or "결과를 읽어오지 못했습니다."
+
 
 
     return "지원되는 챗 API가 없습니다."
