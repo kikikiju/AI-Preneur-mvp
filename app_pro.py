@@ -248,8 +248,11 @@ def request_design_brief(user_prompt: str, system_prompt: str, image_b64: str | 
         if image_b64:
             content.append({
                 "type": "input_image",
-                "image_base64": image_b64
+                "data": {
+                    "image": image_b64
+                }
             })
+
 
 
 
