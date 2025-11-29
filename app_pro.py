@@ -108,23 +108,47 @@ def build_prompt(user_prompt: str, system_prompt: str) -> str:
 def extract_output_text(response):
     """
     Responses API output 에서 텍스트를 추출하는 안전한 헬퍼 함수
-    (output이 None이더라도 오류가 나지 않음)
+    dict / object 타입 모두 안전하게 처리
     """
     if not hasattr(response, "output") or response.output is None:
-        # fallback: 일부 모델은 response.output_text 로 제공
+        # fallback (일부 모델은 output_text 를 직접 제공)
         if hasattr(response, "output_text") and response.output_text:
             return response.output_text
-        
-        return ""  # 완전 실패 시 빈 문자열 반환
+        return ""
 
     final_text = ""
-    for block in response.output:
-        content = block.get("content", [])
-        if content:
-            for c in content:
+
+    # output이 없을 수도 있음
+    output = getattr(response, "output", None)
+    if not output:
+        # 일부 모델은 output_text로만 제공함
+        if hasattr(response, "output_text"):
+            return response.output_text or ""
+        return ""
+
+    for item in output:
+        content = getattr(item, "content", None)
+        if not content:
+            continue
+
+        for c in content:
+
+            # 1) 객체 타입(content.item이 object 형태) 처리
+            if hasattr(c, "type") and c.type == "output_text":
+                if hasattr(c, "text"):
+                    final_text += (c.text or "")
+
+            # 2) dict 타입 처리
+            elif isinstance(c, dict):
                 if c.get("type") == "output_text":
                     final_text += c.get("text", "")
+
+            # 3) ResponseReasoningItem처럼 dict도 아니고 type/text가 없는 경우는 무시
+            else:
+                continue
+
     return final_text
+
 
 # =============================================================
 #  GPT 분석: 채팅에서 사용자의 의도(디자인 요소) 추출
@@ -171,7 +195,7 @@ def analyze_intent_with_gpt(user_text, current_order, chat_history):
 
             content_str = extract_output_text(response).strip()
 
-            content_str = out.strip()
+            content_str = content_str.strip()
         else:
             return current_order, "지원되는 챗 API가 없습니다."
 
