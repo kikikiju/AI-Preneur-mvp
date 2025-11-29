@@ -72,7 +72,6 @@ if not OPENAI_API_KEY:
 
 client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 HAS_RESPONSES_API = bool(client and getattr(getattr(client, "responses", None), "create", None))
-HAS_CHAT_API = bool(client and getattr(getattr(getattr(client, "chat", None), "completions", None), "create", None))
 HAS_LEGACY_CHAT_API = bool(client and getattr(client, "ChatCompletion", None))
 HAS_IMAGES_API = bool(client and getattr(getattr(client, "images", None), "generate", None))
 HAS_LEGACY_IMAGE_API = bool(client and getattr(client, "Image", None))
@@ -158,26 +157,6 @@ def analyze_intent_with_gpt(user_text, current_order, chat_history):
                         out += c.get("text", "")
 
             content_str = out.strip()
-        elif HAS_CHAT_API or HAS_LEGACY_CHAT_API:
-            response = None
-            if HAS_CHAT_API:
-                response = client.responses.create(
-                    model="gpt-5-nano",
-                    input=[{
-                        "role": "user",
-                        "content": content
-                    }],
-                )
-                content_str = response.choices[0].message.content.strip()
-            else:
-                response = client.responses.create(
-                    model="gpt-5-nano",
-                    input=[{
-                        "role": "user",
-                        "content": content
-                    }],
-                )
-                content_str = response["choices"][0]["message"]["content"].strip()
         else:
             return current_order, "지원되는 챗 API가 없습니다."
 
@@ -228,7 +207,11 @@ def request_design_brief(user_prompt: str, system_prompt: str, image_b64: str | 
     if HAS_RESPONSES_API:
         content = [{"type": "input_text", "text": enhanced_prompt}]
         if image_b64:
-            content.append({"type": "input_image", "image": image_b64})
+            content.append({
+                "type": "input_image",
+                "image_base64": image_b64
+            })
+
 
 
         response = client.responses.create(
@@ -241,24 +224,9 @@ def request_design_brief(user_prompt: str, system_prompt: str, image_b64: str | 
         primary_text = ""
         for out in response.output:
             for c in out.content:
-                if c.get("type") == "text":
+                if c.get("type") == "output_text":
                     primary_text += c.get("text", "")
         return primary_text or "결과를 읽어오지 못했습니다."
-
-    if HAS_CHAT_API:
-        response = client.responses.create(
-                model="gpt-5-nano",
-                input=[{
-                    "role": "user",
-                    "content": content
-                }],
-            )
-        message = response.choices[0].message
-        if hasattr(message, "content"):
-            return message.content
-        if isinstance(message, dict):
-            return message.get("content", "결과를 읽어오지 못했습니다.")
-        return "결과를 읽어오지 못했습니다."
 
     if HAS_LEGACY_CHAT_API:
         response = client.responses.create(
